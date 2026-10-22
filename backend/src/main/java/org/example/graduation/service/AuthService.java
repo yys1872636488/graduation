@@ -6,7 +6,7 @@ import org.example.graduation.vo.UserInfoVO;
 
 public interface AuthService {
 
-    LoginVO login(LoginDTO loginDTO);
+    LoginVO login(LoginDTO loginDTO, String clientIp);
 
     UserInfoVO getCurrentUserInfo(Long userId);
 

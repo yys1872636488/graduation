@@ -33,9 +33,9 @@ mybatis-plus:
       logic-delete-value: 1
       logic-not-delete-value: 0
 
-# JWT 配置
+# JWT 配置（JWT_SECRET 必须通过环境变量提供，至少 32 个字符）
 jwt:
-  secret: ${JWT_SECRET:graduation-project-jwt-secret-key-2024}
+  secret: ${JWT_SECRET:}
   expiration: 86400000  # 24 hours
 
 # 文件上传路径

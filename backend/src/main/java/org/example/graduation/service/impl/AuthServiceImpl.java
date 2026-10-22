@@ -8,6 +8,7 @@ import org.example.graduation.entity.SysUser;
 import org.example.graduation.mapper.SysPermissionMapper;
 import org.example.graduation.mapper.SysUserMapper;
 import org.example.graduation.security.JwtTokenProvider;
+import org.example.graduation.security.LoginAttemptService;
 import org.example.graduation.service.AuthService;
 import org.example.graduation.vo.LoginVO;
 import org.example.graduation.vo.MenuVO;
@@ -30,20 +31,30 @@ public class AuthServiceImpl implements AuthService {
     private final SysPermissionMapper sysPermissionMapper;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
+    private final LoginAttemptService loginAttemptService;
 
     @Override
-    public LoginVO login(LoginDTO loginDTO) {
+    public LoginVO login(LoginDTO loginDTO, String clientIp) {
+        String attemptKey = loginDTO.getUsername() + "|" + (clientIp == null ? "" : clientIp);
+        if (loginAttemptService.isBlocked(attemptKey)) {
+            throw new BusinessException(429, "登录失败次数过多，请15分钟后再试");
+        }
+
         SysUser user = sysUserMapper.selectOne(
                 new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<SysUser>()
                         .eq(SysUser::getUsername, loginDTO.getUsername())
                         .eq(SysUser::getStatus, 1)
         );
         if (user == null) {
+            loginAttemptService.loginFailed(attemptKey);
             throw new BusinessException("用户名或密码错误");
         }
         if (!passwordEncoder.matches(loginDTO.getPassword(), user.getPassword())) {
+            loginAttemptService.loginFailed(attemptKey);
             throw new BusinessException("用户名或密码错误");
         }
+
+        loginAttemptService.loginSucceeded(attemptKey);
         String token = jwtTokenProvider.generateToken(user.getId(), user.getUsername());
         return new LoginVO(token);
     }

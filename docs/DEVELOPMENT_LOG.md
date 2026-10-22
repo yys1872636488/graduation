@@ -61,6 +61,8 @@
 | qc | 123456 | 生产与质检人员 | 40 |
 | warehouse | 123456 | 仓储与销售人员 | 39 |
 
+> 以上账号仅用于开发演示环境，登录页已不再展示默认账号。部署前必须修改初始密码或移除测试账号。
+
 ### 3.4 基础修复记录（2026-10-22）
 
 在不新增业务模块的前提下完成以下修复：
@@ -88,6 +90,35 @@
 | 登录后的操作日志 | 密码显示为 `***` |
 
 **注意：** 修复前已产生的历史日志中仍存在明文密码（如日志 id 52）。是否清理这些历史记录需用户确认，未自动修改历史数据。
+
+### 3.5 安全加固记录（2026-10-22）
+
+针对代码安全审查发现的问题，处理了以下三项：
+
+1. **用户管理接口越权防护**（`SysUserServiceImpl`）
+   - 管理员可管理任意账号，但不能通过用户管理接口操作自己；
+   - 非管理员只能管理角色权限严格低于自己的账号，禁止操作管理员账号和同级账号；
+   - 创建/编辑用户时，非管理员只能分配自己已拥有的角色，防止提权。
+2. **移除 JWT 默认密钥**（`application.yml`、`JwtTokenProvider`）
+   - `JWT_SECRET` 改为必填环境变量，不再提供可猜测的默认值；
+   - 启动时校验：为空、等于示例值或不足 32 字节时直接启动失败。
+3. **登录安全**（`LoginAttemptService`、`AuthController`、`AuthServiceImpl`、`LoginView.vue`）
+   - 同一“用户名 + IP”在 15 分钟内失败 5 次后锁定 15 分钟；
+   - 登录成功后清除失败计数；
+   - 移除登录页“测试账号：admin / admin123”提示。
+
+验证结果：
+
+| 测试 | 结果 |
+|---|---|
+| `mvn -DskipTests compile` | 通过 |
+| `npm run build` | 通过 |
+| 未配置 `JWT_SECRET` 启动 | 按预期启动失败并提示配置方式 |
+| 连续 5 次错误密码后再次登录 | 返回“登录失败次数过多，请15分钟后再试” |
+| 管理员通过用户管理接口重置自己的密码（触发权限守卫） | 403，被拒绝 |
+| 管理员正常登录与基础查询 | 正常 |
+
+说明：跨账号越权场景需要临时调整角色权限，本次未执行该测试；守卫逻辑已通过自身账号场景验证。
 
 ## 四、设计决策记录
 
@@ -201,9 +232,10 @@
 
 ### 启动命令
 ```bash
-# 后端
-cd backend && set DB_PASSWORD=你的数据库密码 && mvn spring-boot:run   # Windows CMD
-# 或在 Git Bash / macOS / Linux 中：DB_PASSWORD=你的数据库密码 mvn spring-boot:run
+# 后端（JWT_SECRET 必填，至少 32 个字符）
+cd backend && set DB_PASSWORD=你的数据库密码 && set JWT_SECRET=你的随机密钥 && mvn spring-boot:run   # Windows CMD
+# Git Bash / macOS / Linux：
+# DB_PASSWORD=你的数据库密码 JWT_SECRET=$(openssl rand -base64 32) mvn spring-boot:run
 
 # 前端
 cd frontend && npm run dev
@@ -223,6 +255,8 @@ cd frontend && npm run dev
 | 6 | 视觉服务依赖未安装（venv 中仅有 pip） | 中 | 待环境准备 |
 | 7 | 自动编号采用“计数+1”，并发或逻辑删除后存在撞号风险 | 低 | 未修复 |
 | 8 | 后端无自动化测试（`src/test` 为空） | 中 | 未开始 |
+| 9 | 开发演示账号仍使用初始密码（admin/admin123 等） | 中 | 部署前需修改或移除 |
+| 10 | 退出登录、重置密码后旧 JWT 仍然有效（无状态令牌，未实现吊销） | 中 | 未修复 |
 
 ## 九、Claude Code 交接说明
 

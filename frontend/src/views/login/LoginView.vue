@@ -55,9 +55,6 @@
             </el-button>
           </el-form-item>
         </el-form>
-        <div class="form-footer">
-          <span>测试账号：admin / admin123</span>
-        </div>
       </div>
     </main>
   </div>
@@ -211,15 +208,4 @@ async function handleLogin() {
   letter-spacing: 0.04em;
 }
 
-.form-footer {
-  text-align: center;
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid var(--color-border);
-}
-
-.form-footer span {
-  font-size: 12px;
-  color: var(--color-text-secondary);
-}
 </style>

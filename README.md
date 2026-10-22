@@ -63,9 +63,14 @@ CREATE DATABASE IF NOT EXISTS graduation_db DEFAULT CHARSET utf8mb4;
 
 ```bash
 cd backend
-# 修改 src/main/resources/application.yml 中的数据库密码
+# 数据库密码与 JWT 密钥通过环境变量提供（JWT_SECRET 必填，至少 32 个字符）
+export DB_PASSWORD=你的数据库密码
+export JWT_SECRET=$(openssl rand -base64 32)
 mvn spring-boot:run
 ```
+
+> `JWT_SECRET` 未配置或长度不足时后端会启动失败，这是为避免使用可猜测的默认密钥。
+> 生产部署请通过环境变量或密钥管理服务提供，不要写入代码或提交到 Git。
 
 ### 3. 前端
 

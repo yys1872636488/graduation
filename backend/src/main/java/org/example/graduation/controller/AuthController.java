@@ -20,8 +20,8 @@ public class AuthController {
     private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping("/login")
-    public Result<?> login(@Valid @RequestBody LoginDTO loginDTO) {
-        return Result.success(authService.login(loginDTO));
+    public Result<?> login(@Valid @RequestBody LoginDTO loginDTO, HttpServletRequest request) {
+        return Result.success(authService.login(loginDTO, getClientIp(request)));
     }
 
     @PostMapping("/logout")
@@ -33,6 +33,14 @@ public class AuthController {
     public Result<?> me(HttpServletRequest request) {
         Long userId = getUserIdFromRequest(request);
         return Result.success(authService.getCurrentUserInfo(userId));
+    }
+
+    private String getClientIp(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (!StringUtils.hasText(ip) || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        }
+        return ip != null && ip.contains(",") ? ip.split(",")[0].trim() : ip;
     }
 
     private Long getUserIdFromRequest(HttpServletRequest request) {
