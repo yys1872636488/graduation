@@ -1,0 +1,64 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
+dist/
+build/
+target/
+*.class
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.settings/
+.project
+.classpath
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+venv/
+.venv/
+env/
+*.egg-info/
+
+# Uploaded files
+uploads/
+vision-service/uploads/
+backend/uploads/
+
+# Model weights (do not commit)
+vision-service/models/*.pt
+vision-service/models/*.pth
+vision-service/models/*.weights
+vision-service/models/*.onnx
+
+# Database
+*.sqlite
+*.db
+
+# Config with secrets
+application-local.yml
+application-dev.yml
