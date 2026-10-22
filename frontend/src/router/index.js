@@ -33,6 +33,7 @@ const routes = [
       // 来料质检
       { path: 'inspection/detect', name: 'InspectionUpload', component: () => import('@/views/inspection/InspectionUpload.vue'), meta: { title: '布料检测' } },
       { path: 'inspection/review', name: 'InspectionReview', component: () => import('@/views/inspection/InspectionReview.vue'), meta: { title: '质检复核' } },
+      { path: 'inspection/records', name: 'InspectionRecordList', component: () => import('@/views/inspection/InspectionRecordList.vue'), meta: { title: '质检记录' } },
       // 生产管理
       { path: 'production/plans', name: 'ProductionPlanList', component: () => import('@/views/production/ProductionPlanList.vue'), meta: { title: '生产计划' } },
       { path: 'production/orders', name: 'WorkOrderList', component: () => import('@/views/production/WorkOrderList.vue'), meta: { title: '生产工单' } },

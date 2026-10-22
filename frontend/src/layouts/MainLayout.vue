@@ -80,25 +80,102 @@
         <router-view />
       </main>
     </div>
+
+    <!-- 修改密码 -->
+    <el-dialog v-model="pwdDialog" title="修改密码" width="420px" @closed="resetPwdForm">
+      <el-form ref="pwdFormRef" :model="pwdForm" :rules="pwdRules" label-width="90px">
+        <el-form-item label="当前密码" prop="oldPassword">
+          <el-input v-model="pwdForm.oldPassword" type="password" show-password
+                    autocomplete="current-password" placeholder="请输入当前密码" />
+        </el-form-item>
+        <el-form-item label="新密码" prop="newPassword">
+          <el-input v-model="pwdForm.newPassword" type="password" show-password
+                    autocomplete="new-password" placeholder="6-128 位" />
+        </el-form-item>
+        <el-form-item label="确认新密码" prop="confirmPassword">
+          <el-input v-model="pwdForm.confirmPassword" type="password" show-password
+                    autocomplete="new-password" placeholder="请再次输入新密码" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="pwdDialog = false">取消</el-button>
+        <el-button type="primary" :loading="pwdSaving" @click="submitPwd">确定</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import { ElMessageBox } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { changePassword } from '@/api/auth'
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 const isCollapse = ref(false)
 
+const pwdDialog = ref(false)
+const pwdSaving = ref(false)
+const pwdFormRef = ref(null)
+const pwdForm = reactive({ oldPassword: '', newPassword: '', confirmPassword: '' })
+
+function validateConfirm(rule, value, callback) {
+  if (value !== pwdForm.newPassword) {
+    callback(new Error('两次输入的新密码不一致'))
+  } else {
+    callback()
+  }
+}
+
+const pwdRules = {
+  oldPassword: [{ required: true, message: '请输入当前密码', trigger: 'blur' }],
+  newPassword: [
+    { required: true, message: '请输入新密码', trigger: 'blur' },
+    { min: 6, max: 128, message: '新密码长度需为6-128位', trigger: 'blur' },
+  ],
+  confirmPassword: [
+    { required: true, message: '请再次输入新密码', trigger: 'blur' },
+    { validator: validateConfirm, trigger: 'blur' },
+  ],
+}
+
+function resetPwdForm() {
+  pwdForm.oldPassword = ''
+  pwdForm.newPassword = ''
+  pwdForm.confirmPassword = ''
+  pwdFormRef.value?.clearValidate()
+}
+
+async function submitPwd() {
+  if (!await pwdFormRef.value.validate().catch(() => false)) return
+  pwdSaving.value = true
+  try {
+    await changePassword({
+      oldPassword: pwdForm.oldPassword,
+      newPassword: pwdForm.newPassword,
+    })
+    pwdDialog.value = false
+    ElMessage.success('密码修改成功，请重新登录')
+    setTimeout(() => userStore.logout(), 500)
+  } catch {
+    // 错误提示由 Axios 拦截器统一处理
+  } finally {
+    pwdSaving.value = false
+  }
+}
+
 function isActive(path) {
   return route.path === path || route.path.startsWith(path + '/')
 }
 
 function handleCommand(cmd) {
+  if (cmd === 'password') {
+    pwdDialog.value = true
+    return
+  }
   if (cmd === 'logout') {
     ElMessageBox.confirm('确定退出当前账号？', '退出确认', {
       confirmButtonText: '确定',

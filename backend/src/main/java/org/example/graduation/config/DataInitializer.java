@@ -108,6 +108,7 @@ public class DataInitializer implements CommandLineRunner {
         perm(inspection, "inspection:upload", "上传图片", "button", "", "", "", 73);
         perm(inspection, "inspection:detect-btn", "开始检测", "button", "", "", "", 74);
         perm(inspection, "inspection:review-btn", "复核质检", "button", "", "", "", 75);
+        perm(inspection, "inspection:record", "质检记录", "menu", "/inspection/records", "inspection/InspectionRecordList", "DocumentChecked", 76);
 
         // 生产管理
         long production = perm(0, "production", "生产管理", "menu", "", "", "Cpu", 80);
@@ -125,6 +126,10 @@ public class DataInitializer implements CommandLineRunner {
         perm(production, "production:progress-write", "登记进度", "button", "", "", "", 92);
         perm(production, "production:qc-write", "成品质检", "button", "", "", "", 93);
         perm(production, "production:qc-review", "返工/复检", "button", "", "", "", 94);
+        perm(production, "production:plan:release", "下达生产计划", "button", "", "", "", 95);
+        perm(production, "production:order:start", "开始生产", "button", "", "", "", 96);
+        perm(production, "production:order:report", "生产报工", "button", "", "", "", 97);
+        perm(production, "production:order:cancel", "取消工单", "button", "", "", "", 98);
 
         // 仓储管理
         long warehouse = perm(0, "warehouse", "仓储管理", "menu", "", "", "Shop", 100);
@@ -158,7 +163,9 @@ public class DataInitializer implements CommandLineRunner {
         perm(trace, "traceability:read", "查看追溯", "button", "", "", "", 144);
         perm(trace, "statistics:read", "查看统计", "button", "", "", "", 145);
 
-        log.info("初始权限创建完成（共 {} 条）", 145);
+        Integer permissionCount = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM sys_permission", Integer.class);
+        log.info("初始权限创建完成（共 {} 条）", permissionCount);
     }
 
     private long perm(long parentId, String code, String name, String type,
@@ -226,6 +233,7 @@ public class DataInitializer implements CommandLineRunner {
                 "batch:read",
                 "basic:supplier", "basic:material",
                 "supplier:read", "material:read",
+                "inspection", "inspection:record",
                 "traceability", "traceability:forward", "traceability:reverse", "traceability:statistics",
                 "traceability:read", "statistics:read"
         );
@@ -235,6 +243,7 @@ public class DataInitializer implements CommandLineRunner {
                 "dashboard",
                 "inspection", "inspection:detect", "inspection:review",
                 "inspection:upload", "inspection:detect-btn", "inspection:review-btn",
+                "inspection:record",
                 "production", "production:plan", "production:order", "production:issue",
                 "production:progress", "production:qc",
                 "production:plan:read", "production:plan:create", "production:plan:edit",
@@ -242,6 +251,8 @@ public class DataInitializer implements CommandLineRunner {
                 "production:issue-material",
                 "production:progress-write",
                 "production:qc-write", "production:qc-review",
+                "production:plan:release", "production:order:start",
+                "production:order:report", "production:order:cancel",
                 "basic:supplier", "basic:material", "basic:product", "basic:sku",
                 "supplier:read", "material:read", "product:read", "sku:read",
                 "procurement:batch", "batch:read",

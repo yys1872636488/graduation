@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.graduation.common.BusinessException;
 import org.example.graduation.common.Result;
+import org.example.graduation.dto.ChangePasswordDTO;
 import org.example.graduation.dto.LoginDTO;
 import org.example.graduation.security.JwtTokenProvider;
 import org.example.graduation.service.AuthService;
@@ -33,6 +34,13 @@ public class AuthController {
     public Result<?> me(HttpServletRequest request) {
         Long userId = getUserIdFromRequest(request);
         return Result.success(authService.getCurrentUserInfo(userId));
+    }
+
+    @PutMapping("/password")
+    public Result<?> changePassword(@Valid @RequestBody ChangePasswordDTO dto,
+                                    HttpServletRequest request) {
+        authService.changePassword(getUserIdFromRequest(request), dto);
+        return Result.success();
     }
 
     private String getClientIp(HttpServletRequest request) {

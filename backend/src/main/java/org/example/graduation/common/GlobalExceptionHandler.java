@@ -4,9 +4,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.BindException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
  * 全局异常处理器
@@ -32,11 +34,26 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BindException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Result<Void> handleBindException(BindException e) {
-        String msg = e.getBindingResult().getAllErrors().stream()
+        return Result.error(400, firstErrorMessage(e.getBindingResult()));
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Result<Void> handleMethodArgumentNotValid(MethodArgumentNotValidException e) {
+        return Result.error(400, firstErrorMessage(e.getBindingResult()));
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public Result<Void> handleNoResourceFound(NoResourceFoundException e) {
+        return Result.error(404, "资源不存在");
+    }
+
+    private String firstErrorMessage(org.springframework.validation.BindingResult bindingResult) {
+        return bindingResult.getAllErrors().stream()
                 .findFirst()
                 .map(err -> err.getDefaultMessage())
                 .orElse("参数校验失败");
-        return Result.error(400, msg);
     }
 
     @ExceptionHandler(Exception.class)

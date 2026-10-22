@@ -2,6 +2,7 @@ package org.example.graduation.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.example.graduation.common.BusinessException;
+import org.example.graduation.dto.ChangePasswordDTO;
 import org.example.graduation.dto.LoginDTO;
 import org.example.graduation.entity.SysPermission;
 import org.example.graduation.entity.SysUser;
@@ -56,6 +57,22 @@ public class AuthServiceImpl implements AuthService {
         loginAttemptService.loginSucceeded(attemptKey);
         String token = jwtTokenProvider.generateToken(user.getId(), user.getUsername());
         return new LoginVO(token);
+    }
+
+    @Override
+    public void changePassword(Long userId, ChangePasswordDTO dto) {
+        SysUser user = sysUserMapper.selectById(userId);
+        if (user == null) {
+            throw new BusinessException("用户不存在");
+        }
+        if (!passwordEncoder.matches(dto.getOldPassword(), user.getPassword())) {
+            throw new BusinessException("当前密码不正确");
+        }
+        if (passwordEncoder.matches(dto.getNewPassword(), user.getPassword())) {
+            throw new BusinessException("新密码不能与当前密码相同");
+        }
+        user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+        sysUserMapper.updateById(user);
     }
 
     @Override

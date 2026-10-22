@@ -11,3 +11,7 @@ export function getUserInfo() {
 export function logout() {
   return request.post('/auth/logout')
 }
+
+export function changePassword(data) {
+  return request.put('/auth/password', data)
+}

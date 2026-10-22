@@ -74,3 +74,142 @@ export const WAREHOUSE_TYPES = [
 export const SUPPLIER_TYPES = [
   '面料供应商', '辅料供应商', '综合供应商', '其他',
 ]
+
+// ========================================
+// 采购管理
+// ========================================
+
+/** 采购订单状态 */
+export const PURCHASE_ORDER_STATUS = {
+  DRAFT: { label: '草稿', type: 'info' },
+  SUBMITTED: { label: '已提交', type: 'primary' },
+  PARTIAL_RECEIVED: { label: '部分到货', type: 'warning' },
+  COMPLETED: { label: '已完成', type: 'success' },
+  CANCELLED: { label: '已取消', type: 'danger' },
+}
+
+/** 原材料批次检验状态 */
+export const BATCH_INSPECTION_STATUS = {
+  PENDING_INSPECTION: { label: '待检', type: 'warning' },
+  INSPECTING: { label: '检测中', type: 'primary' },
+  PENDING_REVIEW: { label: '待复核', type: 'warning' },
+  QUALIFIED: { label: '合格', type: 'success' },
+  UNQUALIFIED: { label: '不合格', type: 'danger' },
+  STOCKED: { label: '已入库', type: 'success' },
+  DEPLETED: { label: '已耗尽', type: 'info' },
+  ON_HOLD: { label: '暂停使用', type: 'info' },
+}
+
+/** 机器视觉检测结果状态 */
+export const DETECTION_STATUS = {
+  SUCCESS: { label: '检测完成', type: 'success' },
+  MODEL_NOT_CONFIGURED: { label: '检测服务未配置', type: 'warning' },
+  SERVICE_UNAVAILABLE: { label: '视觉服务不可用', type: 'danger' },
+  FAILED: { label: '检测失败', type: 'danger' },
+}
+
+/** 不合格处理方式（来料） */
+export const DISPOSITIONS = [
+  { value: 'RETURN', label: '退货' },
+  { value: 'ISOLATE', label: '隔离' },
+  { value: 'SCRAP', label: '报废' },
+  { value: 'CONCESSION', label: '让步接收' },
+]
+
+// ========================================
+// 生产管理
+// ========================================
+
+/** 生产计划状态 */
+export const PRODUCTION_PLAN_STATUS = {
+  DRAFT: { label: '草稿', type: 'info' },
+  RELEASED: { label: '已下达', type: 'primary' },
+  IN_PROGRESS: { label: '生产中', type: 'warning' },
+  COMPLETED: { label: '已完成', type: 'success' },
+  CANCELLED: { label: '已取消', type: 'danger' },
+}
+
+/** 生产工单状态 */
+export const WORK_ORDER_STATUS = {
+  PENDING: { label: '待执行', type: 'info' },
+  IN_PROGRESS: { label: '生产中', type: 'primary' },
+  PENDING_QC: { label: '待质检', type: 'warning' },
+  REWORKING: { label: '返工中', type: 'warning' },
+  COMPLETED: { label: '已完成', type: 'success' },
+  CANCELLED: { label: '已取消', type: 'danger' },
+}
+
+/** 成品质检结果 */
+export const FINISHED_INSPECTION_RESULT = {
+  QUALIFIED: { label: '合格', type: 'success' },
+  PARTIAL: { label: '部分合格', type: 'warning' },
+  UNQUALIFIED: { label: '不合格', type: 'danger' },
+}
+
+/** 不合格品处理类型 */
+export const QUALITY_DISPOSITION_TYPES = [
+  { value: 'REWORK', label: '返工' },
+  { value: 'RECHECK', label: '复检' },
+  { value: 'SCRAP', label: '报废' },
+]
+
+/** 生产工序（当前工序） */
+export const PRODUCTION_PROCESSES = [
+  { value: 'CUTTING', label: '裁剪' },
+  { value: 'SEWING', label: '缝制' },
+  { value: 'IRONING', label: '整烫' },
+  { value: 'PACKING', label: '包装' },
+  { value: 'OTHER', label: '其他' },
+]
+
+/** 成品批次状态 */
+export const FINISHED_BATCH_STATUS = {
+  PENDING_INBOUND: { label: '待入库', type: 'warning' },
+  AVAILABLE: { label: '可售库存', type: 'success' },
+  DEPLETED: { label: '已耗尽', type: 'info' },
+}
+
+// ========================================
+// 库存与销售
+// ========================================
+
+/** 库存对象类型 */
+export const INVENTORY_ITEM_TYPES = {
+  MATERIAL: { label: '原材料' },
+  FINISHED: { label: '成品' },
+}
+
+/** 库存业务类型 */
+export const INVENTORY_BUSINESS_TYPES = {
+  MATERIAL_INBOUND: { label: '原材料入库', type: 'success' },
+  MATERIAL_ISSUE: { label: '生产领料', type: 'warning' },
+  FINISHED_INBOUND: { label: '成品入库', type: 'success' },
+  SALES_OUTBOUND: { label: '销售出库', type: 'primary' },
+}
+
+/** 销售订单状态 */
+export const SALES_ORDER_STATUS = {
+  DRAFT: { label: '草稿', type: 'info' },
+  PENDING_SHIPMENT: { label: '待发货', type: 'warning' },
+  PARTIAL_SHIPPED: { label: '部分发货', type: 'warning' },
+  SHIPPED: { label: '已发货', type: 'success' },
+  COMPLETED: { label: '已完成', type: 'success' },
+  CANCELLED: { label: '已取消', type: 'danger' },
+}
+
+/** 售后类型 */
+export const AFTER_SALES_TYPES = [
+  { value: 'RETURN', label: '退货' },
+  { value: 'EXCHANGE', label: '换货' },
+  { value: 'REPAIR', label: '维修' },
+  { value: 'CONSULT', label: '咨询' },
+]
+
+/** 售后状态 */
+export const AFTER_SALES_STATUS = {
+  PENDING: { label: '待处理', type: 'warning' },
+  PROCESSING: { label: '处理中', type: 'primary' },
+  PENDING_ACCEPTANCE: { label: '待验收', type: 'warning' },
+  COMPLETED: { label: '已完成', type: 'success' },
+  CLOSED: { label: '已关闭', type: 'info' },
+}

@@ -3,6 +3,8 @@ package org.example.graduation.aspect;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -72,11 +74,20 @@ public class OperationLogAspect {
             String className = joinPoint.getSignature().getDeclaringType().getSimpleName();
             opLog.setOperation(className + "." + methodName);
 
-            // 记录参数（跳过文件上传等大对象，并对密码等敏感字段脱敏）
+            // 记录参数（跳过请求/响应对象和文件上传，并对密码等敏感字段脱敏）
             Object[] args = joinPoint.getArgs();
-            if (args != null && args.length > 0 && !hasMultipartArg(args)) {
+            List<Object> loggableArgs = new ArrayList<>();
+            if (args != null) {
+                for (Object arg : args) {
+                    if (arg == null || arg instanceof ServletRequest || arg instanceof ServletResponse) {
+                        continue;
+                    }
+                    loggableArgs.add(arg);
+                }
+            }
+            if (!loggableArgs.isEmpty() && !hasMultipartArg(args)) {
                 try {
-                    JsonNode node = objectMapper.valueToTree(args);
+                    JsonNode node = objectMapper.valueToTree(loggableArgs);
                     maskSensitiveFields(node);
                     opLog.setSummary(objectMapper.writeValueAsString(node));
                 } catch (Exception e) {
@@ -92,11 +103,33 @@ public class OperationLogAspect {
             opLog.setErrorMsg(e.getMessage());
             throw e;
         } finally {
+            fillUsernameIfMissing(opLog);
             try {
                 operationLogMapper.insert(opLog);
             } catch (Exception e) {
                 log.error("保存操作日志失败", e);
             }
+        }
+    }
+
+    /**
+     * 登录接口执行时尚未建立认证上下文，从请求参数中补充尝试登录的用户名。
+     */
+    private void fillUsernameIfMissing(SysOperationLog opLog) {
+        if (opLog.getUsername() != null && !opLog.getUsername().isBlank()) {
+            return;
+        }
+        String summary = opLog.getSummary();
+        if (summary == null || summary.isBlank()) {
+            return;
+        }
+        try {
+            JsonNode node = objectMapper.readTree(summary);
+            if (node.isArray() && !node.isEmpty() && node.get(0).hasNonNull("username")) {
+                opLog.setUsername(node.get(0).get("username").asText());
+            }
+        } catch (Exception ignored) {
+            // 历史摘要或非 JSON 内容，保持原样
         }
     }
 

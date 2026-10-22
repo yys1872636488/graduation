@@ -7,20 +7,20 @@
 
     <div class="stat-grid">
       <div class="stat-item">
-        <span class="stat-value">—</span>
+        <span class="stat-value">{{ stats.purchaseOrderCount ?? '—' }}</span>
         <span class="stat-label">采购订单</span>
       </div>
       <div class="stat-item">
-        <span class="stat-value">—</span>
+        <span class="stat-value">{{ stats.pendingInspectionCount ?? '—' }}</span>
         <span class="stat-label">待检批次</span>
       </div>
       <div class="stat-item">
-        <span class="stat-value">—</span>
+        <span class="stat-value">{{ stats.workOrderInProgress ?? '—' }}</span>
         <span class="stat-label">生产中工单</span>
       </div>
       <div class="stat-item">
-        <span class="stat-value">—</span>
-        <span class="stat-label">成品库存</span>
+        <span class="stat-value">{{ finishedStock }}</span>
+        <span class="stat-label">成品可用库存</span>
       </div>
     </div>
 
@@ -44,10 +44,16 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useUserStore } from '@/stores/user'
+import { getOverview } from '@/api/statistics'
 
 const userStore = useUserStore()
+const stats = ref({})
+const finishedStock = computed(() => {
+  const value = Number(stats.value.finishedStock ?? 0)
+  return Number.isFinite(value) ? value.toFixed(0) : '—'
+})
 
 const greeting = computed(() => {
   const hour = new Date().getHours()
@@ -56,6 +62,17 @@ const greeting = computed(() => {
   const roles = userStore.roles.join(' / ')
   return `${time}，${name}。当前角色：${roles}。`
 })
+
+async function loadStats() {
+  try {
+    const r = await getOverview()
+    stats.value = r.data || {}
+  } catch {
+    stats.value = {}
+  }
+}
+
+onMounted(loadStats)
 
 const quickLinks = [
   { path: '/basic/suppliers', label: '供应商管理', icon: 'OfficeBuilding' },
