@@ -107,6 +107,13 @@ public class SysUserServiceImpl implements SysUserService {
     @Override
     @Transactional
     public UserVO updateUser(Long id, UserUpdateDTO dto) {
+        Long callerId = currentUserId();
+        boolean editingSelf = callerId.equals(id);
+        // 非本人必须从入口处校验管理权限，不能等到角色变更时才校验
+        if (!editingSelf) {
+            assertCanManageTarget(id);
+        }
+
         SysUser user = sysUserMapper.selectById(id);
         if (user == null) {
             throw new BusinessException("用户不存在");
@@ -117,9 +124,11 @@ public class SysUserServiceImpl implements SysUserService {
         user.setEmail(dto.getEmail() != null ? dto.getEmail() : user.getEmail());
         sysUserMapper.updateById(user);
 
-        // 更新角色：只能修改自己有权管理的账号，且不能分配超出自身权限的角色
+        // 更新角色：不允许修改自己的角色，且不能分配超出自身权限的角色
         if (dto.getRoleIds() != null) {
-            assertCanManageTarget(id);
+            if (editingSelf) {
+                throw new AccessDeniedException("不能修改自己的角色");
+            }
             assertRolesAssignable(dto.getRoleIds());
             sysUserMapper.deleteUserRolesByUserId(id);
             for (Long roleId : dto.getRoleIds()) {

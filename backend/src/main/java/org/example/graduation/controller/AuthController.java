@@ -36,11 +36,10 @@ public class AuthController {
     }
 
     private String getClientIp(HttpServletRequest request) {
-        String ip = request.getHeader("X-Forwarded-For");
-        if (!StringUtils.hasText(ip) || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getRemoteAddr();
-        }
-        return ip != null && ip.contains(",") ? ip.split(",")[0].trim() : ip;
+        // 当前部署未经过反向代理，直接使用 TCP 对端地址。
+        // X-Forwarded-For 可被客户端伪造，不能作为限流身份。
+        // 若后续引入反向代理，应配置可信代理后再由容器解析真实地址。
+        return request.getRemoteAddr();
     }
 
     private Long getUserIdFromRequest(HttpServletRequest request) {

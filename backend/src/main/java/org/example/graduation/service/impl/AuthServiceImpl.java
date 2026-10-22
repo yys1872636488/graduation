@@ -36,7 +36,8 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public LoginVO login(LoginDTO loginDTO, String clientIp) {
         String attemptKey = loginDTO.getUsername() + "|" + (clientIp == null ? "" : clientIp);
-        if (loginAttemptService.isBlocked(attemptKey)) {
+        // 先原子占用一次尝试，再校验密码，避免并发请求绕过锁定阈值
+        if (!loginAttemptService.tryAcquire(attemptKey)) {
             throw new BusinessException(429, "登录失败次数过多，请15分钟后再试");
         }
 
@@ -46,11 +47,9 @@ public class AuthServiceImpl implements AuthService {
                         .eq(SysUser::getStatus, 1)
         );
         if (user == null) {
-            loginAttemptService.loginFailed(attemptKey);
             throw new BusinessException("用户名或密码错误");
         }
         if (!passwordEncoder.matches(loginDTO.getPassword(), user.getPassword())) {
-            loginAttemptService.loginFailed(attemptKey);
             throw new BusinessException("用户名或密码错误");
         }
 

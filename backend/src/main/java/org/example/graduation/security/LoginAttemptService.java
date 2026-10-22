@@ -24,50 +24,39 @@ public class LoginAttemptService {
     /** 达到上限后的锁定时长（15 分钟） */
     private static final long LOCK_MILLIS = 15 * 60 * 1000L;
 
-    /** 超过该数量时清理过期记录，避免内存无限增长 */
-    private static final int CLEANUP_THRESHOLD = 10000;
+    /** 记录上限，防止大量随机用户名导致内存无限增长 */
+    private static final int MAX_ENTRIES = 10000;
 
     private final Map<String, Attempt> attempts = new ConcurrentHashMap<>();
 
     /**
-     * 判断该账号/IP 当前是否处于锁定期。
+     * 原子地占用一次登录尝试，并判断是否仍允许继续验证密码。
+     *
+     * 计数在密码校验之前完成，避免并发请求同时通过锁定期检查。
+     *
+     * @return true 表示允许本次尝试；false 表示已锁定
      */
-    public boolean isBlocked(String key) {
-        Attempt attempt = attempts.get(key);
-        if (attempt == null) {
-            return false;
+    public boolean tryAcquire(String key) {
+        if (attempts.size() >= MAX_ENTRIES && !attempts.containsKey(key)) {
+            evictOne();
         }
-        synchronized (attempt) {
-            long now = System.currentTimeMillis();
-            if (attempt.lockedUntil > now) {
-                return true;
-            }
-            if (isExpired(attempt, now)) {
-                attempts.remove(key, attempt);
-            }
-            return false;
-        }
-    }
 
-    /**
-     * 记录一次登录失败；达到阈值后自动锁定。
-     */
-    public void loginFailed(String key) {
-        if (attempts.size() > CLEANUP_THRESHOLD) {
-            evictExpired();
-        }
-        attempts.compute(key, (k, attempt) -> {
-            long now = System.currentTimeMillis();
-            if (attempt == null || isExpired(attempt, now)) {
-                attempt = new Attempt();
-                attempt.windowStart = now;
+        long now = System.currentTimeMillis();
+        Attempt attempt = attempts.compute(key, (k, existing) -> {
+            if (existing == null || isExpired(existing, now)) {
+                existing = new Attempt();
+                existing.windowStart = now;
             }
-            attempt.count++;
-            if (attempt.count >= MAX_ATTEMPTS) {
-                attempt.lockedUntil = now + LOCK_MILLIS;
+            existing.count++;
+            if (existing.count == MAX_ATTEMPTS + 1) {
+                existing.lockedUntil = now + LOCK_MILLIS;
             }
-            return attempt;
+            return existing;
         });
+
+        synchronized (attempt) {
+            return attempt.lockedUntil <= now;
+        }
     }
 
     /**
@@ -77,13 +66,29 @@ public class LoginAttemptService {
         attempts.remove(key);
     }
 
+    /**
+     * 锁定期内不过期；锁定结束后视为过期并重置窗口；
+     * 未锁定则按时间窗口判断。
+     */
     private boolean isExpired(Attempt attempt, long now) {
-        return attempt.lockedUntil <= now && now - attempt.windowStart > WINDOW_MILLIS;
+        if (attempt.lockedUntil > now) {
+            return false;
+        }
+        if (attempt.lockedUntil > 0) {
+            return true;
+        }
+        return now - attempt.windowStart > WINDOW_MILLIS;
     }
 
-    private void evictExpired() {
-        long now = System.currentTimeMillis();
-        attempts.entrySet().removeIf(entry -> isExpired(entry.getValue(), now));
+    /**
+     * 达到容量上限时淘汰一个记录，保证 Map 大小有硬上限。
+     */
+    private void evictOne() {
+        var iterator = attempts.keySet().iterator();
+        if (iterator.hasNext()) {
+            iterator.next();
+            iterator.remove();
+        }
     }
 
     private static class Attempt {
